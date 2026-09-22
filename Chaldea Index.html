@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FGO Servant Personality Quiz</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            thai: ['Kanit', 'sans-serif'],
+            sans: ['Inter', 'Kanit', 'sans-serif']
+          },
+          colors: {
+            mono: {
+              50: '#fafafa',
+              100: '#f4f4f5',
+              200: '#e4e4e7',
+              300: '#d4d4d8',
+              400: '#a1a1aa',
+              500: '#71717a',
+              600: '#52525b',
+              700: '#3f3f46',
+              800: '#27272a',
+              900: '#18181b',
+              950: '#09090b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Kanit', 'Inter', sans-serif;
+      background-color: #000000;
+      color: #f4f4f5;
+      min-height: 100vh;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Custom smooth monochrome choice hover */
+    .mono-choice-btn {
+      transition: all 0.15s ease-out;
+    }
+    .mono-choice-btn:hover {
+      background-color: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .mono-choice-btn:active {
+      transform: translateY(0);
+      background-color: #e4e4e7;
+      color: #000000;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen bg-black text-mono-100 selection:bg-white selection:text-black">
+
+  <!-- Top Navigation -->
+  <header class="w-full border-b border-mono-800 bg-black/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-white rounded-full"></span>
+        <span class="text-sm font-semibold tracking-wider uppercase text-white">Chaldea Index</span>
+        <span class="text-xs text-mono-500 hidden sm:inline">| แบบทดสอบบุคลิกภาพ 30 ข้อ</span>
+      </div>
+
+      <button id="soundToggleBtn" class="text-xs font-mono px-2.5 py-1 rounded border border-mono-800 text-mono-400 hover:text-white hover:border-mono-600 transition">
+        SFX: <span id="soundStatusText">ON</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-xl w-full mx-auto px-4 py-8 flex flex-col justify-center">
+
+    <!-- 1. Intro Screen -->
+    <section id="screenIntro" class="flex flex-col gap-6">
+      <div class="border border-mono-800 bg-mono-950 p-6 sm:p-8 rounded-lg">
+        <div class="text-xs font-mono text-mono-500 uppercase tracking-widest mb-3">
+          Personality & Emotional Resonance
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-3 leading-snug">
+          จิตวิญญาณของคุณตรงกับ Servant ตนใด?
+        </h1>
+        <p class="text-mono-400 text-sm leading-relaxed mb-6">
+          แบบทดสอบ 30 ข้อ วิเคราะห์อารมณ์ รสนิยม วิถีชีวิต การดื่มกาแฟ และปฏิกิริยาต่อสถานการณ์รอบตัว เพื่อเทียบเคียงกับคลื่นจิตวิญญาณของ Heroic Spirit ระดับ 5★
+        </p>
+
+        <div class="grid grid-cols-3 gap-2 py-3 border-y border-mono-800/80 mb-6 text-center text-xs font-mono">
+          <div>
+            <div class="text-mono-500">QUESTIONS</div>
+            <div class="text-white font-semibold text-sm">30</div>
+          </div>
+          <div>
+            <div class="text-mono-500">TIME</div>
+            <div class="text-white font-semibold text-sm">~3 MIN</div>
+          </div>
+          <div>
+            <div class="text-mono-500">CLASSES</div>
+            <div class="text-white font-semibold text-sm">ALL 5★</div>
+          </div>
+        </div>
+
+        <button id="btnStart" class="w-full py-3.5 px-4 bg-white text-black font-semibold text-sm rounded hover:bg-mono-200 active:bg-mono-300 transition uppercase tracking-wider">
+          เริ่มการตรวจสอบ (Begin Test)
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. Question Screen -->
+    <section id="screenQuiz" class="hidden flex-col gap-4">
+      
+      <!-- Progress Bar -->
+      <div class="space-y-1.5">
+        <div class="flex justify-between items-center text-xs font-mono text-mono-400">
+          <span id="labelStep">QUESTION 01 / 30</span>
+          <span id="labelCategory" class="text-mono-300">เครื่องดื่มยามเช้า</span>
+        </div>
+        <div class="w-full bg-mono-900 h-1 rounded-full overflow-hidden">
+          <div id="barProgress" class="bg-white h-full w-0 transition-all duration-200"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="border border-mono-800 bg-mono-950 p-6 sm:p-7 rounded-lg">
+        <h2 id="textQuestion" class="text-base sm:text-lg text-white font-medium leading-relaxed mb-6">
+          คำถามจะปรากฏที่นี่...
+        </h2>
+
+        <!-- Options Container -->
+        <div id="optionsContainer" class="flex flex-col gap-2.5">
+          <!-- Dynamically populated buttons -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 3. Result Screen -->
+    <section id="screenResult" class="hidden flex-col gap-5">
+      <div class="border border-mono-800 bg-mono-950 p-6 sm:p-8 rounded-lg space-y-6">
+        
+        <!-- Header Info -->
+        <div class="border-b border-mono-800 pb-5">
+
+          <!-- Servant Icon -->
+          <div class="flex justify-center mb-4">
+            <div id="resServantIcon" class="w-24 h-24 rounded-full border border-mono-700 bg-black flex items-center justify-center overflow-hidden">
+              <!-- Class icon injected here -->
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-2">
+            <span id="resClassBadge" class="text-xs font-mono px-2 py-0.5 rounded border border-mono-700 bg-mono-900 text-mono-200 uppercase tracking-wider">
+              SABER
+            </span>
+            <span class="text-xs font-mono text-mono-400 tracking-widest">RANK ★★★★★</span>
+          </div>
+
+          <h2 id="resServantName" class="text-2xl sm:text-3xl font-bold text-white tracking-tight text-center">
+            Artoria Pendragon
+          </h2>
+          <p id="resServantTitle" class="text-xs sm:text-sm text-mono-400 mt-1 text-center">
+            ราชาอัศวินผู้กวัดแกว่งดาบแห่งพันธสัญญา
+          </p>
+          <div class="text-center mt-2">
+            <a id="resWikiLink" href="https://fategrandorder.fandom.com/wiki/Servant_List" target="_blank" rel="noopener noreferrer" class="text-[11px] font-mono text-mono-500 hover:text-white underline underline-offset-2 transition">
+              ดูภาพและข้อมูลต้นฉบับที่ Fandom Wiki ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Dialogue Quote -->
+        <div class="border-l-2 border-white pl-4 py-1 text-mono-200 italic text-sm leading-relaxed">
+          <span id="resDialogueQuote">...</span>
+        </div>
+
+        <!-- Emotional Analysis -->
+        <div class="space-y-2">
+          <div class="text-xs font-mono uppercase tracking-wider text-mono-400">
+            Psychological & Emotional Analysis
+          </div>
+          <p id="resAnalysisText" class="text-sm text-mono-300 leading-relaxed bg-black p-4 border border-mono-850 rounded">
+            บทวิเคราะห์อารมณ์...
+          </p>
+        </div>
+
+        <!-- Core Details Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="border border-mono-850 bg-black p-3.5 rounded">
+            <span class="text-mono-500 font-mono block mb-1">NOBLE PHANTASM</span>
+            <div id="resNpName" class="font-semibold text-white text-sm">Excalibur</div>
+            <div id="resNpSub" class="text-mono-400 mt-0.5">ดาบพันธสัญญาแห่งชัยชนะ</div>
+          </div>
+          <div class="border border-mono-850 bg-black p-3.5 rounded">
+            <span class="text-mono-500 font-mono block mb-1">DOMINANT TRAIT</span>
+            <div id="resDominantTrait" class="font-semibold text-white text-sm">ระเบียบวินัย & ความซื่อสัตย์</div>
+            <div id="resAlignment" class="text-mono-400 mt-0.5">Lawful Good</div>
+          </div>
+        </div>
+
+        <!-- Skills Summary -->
+        <div class="space-y-2">
+          <div class="text-xs font-mono uppercase tracking-wider text-mono-400">Class Traits & Skills</div>
+          <div id="resSkillsContainer" class="flex flex-col gap-2"></div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center gap-3">
+        <button id="btnCopyResult" class="flex-1 py-3 px-4 border border-mono-700 bg-mono-900 hover:bg-mono-800 text-white text-sm rounded font-medium transition text-center">
+          <span id="copyBtnText">คัดลอกผลลัพธ์</span>
+        </button>
+        <button id="btnRestart" class="flex-1 py-3 px-4 bg-white hover:bg-mono-200 text-black text-sm rounded font-semibold transition text-center">
+          ทำแบบทดสอบอีกครั้ง
+        </button>
+      </div>
+
+      <div id="toastMessage" class="opacity-0 transition-opacity duration-200 text-center text-xs font-mono text-mono-400">
+        Copied to clipboard.
+      </div>
+
+    </section>
+
+  </main>
+
+  <textarea id="tempBuffer" class="sr-only" aria-hidden="true"></textarea>
+
+  <script>
+    // Audio Synthesizer (Minimalist subtle click tones)
+    let sfxEnabled = true;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+
+    function initAudio() {
+      if (!actx && AudioCtx) {
+        actx = new AudioCtx();
+      }
+      if (actx && actx.state === 'suspended') {
+        actx.resume();
+      }
+    }
+
+    function playTone(freq, dur = 0.04) {
+      if (!sfxEnabled) return;
+      initAudio();
+      if (!actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(0.04, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch(e) {}
+    }
+
+    // 30 Comprehensive Lifestyle & Emotional Questions
+    const questions = [
+      {
+        theme: "เครื่องดื่มเริ่มต้นยามเช้า",
+        prompt: "เช้าวันใหม่เริ่มต้นขึ้น สิ่งแรกที่คุณเลือกหยิบมาดื่มเพื่อปลุกร่างกายและจิตใจคืออะไร?",
+        choices: [
+          { text: "น้ำเปล่าบริสุทธิ์อุณหภูมิห้อง ดื่มช้าๆ คืนสมดุลอย่างสงบ", servant: "kinghassan" },
+          { text: "เอสเปรสโซเข้มจัด ขมลึก ปลุกพลังให้พร้อมเผชิญหน้าทั้งวัน", servant: "dantes" },
+          { text: "ชานมร้อน หรือชาอังกฤษหอมกรุ่น ดื่มพร้อมมื้อเช้าที่มีสารอาหารครบถ้วน", servant: "artoria" },
+          { text: "กาแฟดริปเมล็ดพิเศษ หรือเครื่องดื่มพรีเมียมที่คุณคัดสรรมาอย่างดี", servant: "gilgamesh" },
+          { text: "กาแฟกระป๋องเย็นเฉียบ หรือเครื่องดื่มชูกำลัง ดื่มเร็วๆ แล้วพร้อมลุยทันที", servant: "cu" }
+        ]
+      },
+      {
+        theme: "มื้ออาหารเยียวยาจิตใจ",
+        prompt: "หลังจากวันที่เหนื่อยล้าจนแทบหมดแรง มื้ออาหารที่คุณอยากกินเพื่อฟื้นฟูอารมณ์คือ?",
+        choices: [
+          { text: "ซุปอุ่นๆ หรือสตูว์ร้อนๆ ทานง่าย สบายท้องและละมุนหัวใจ", servant: "jeanne" },
+          { text: "สเต็กเนื้อชิ้นโต หรือปิ้งย่างบาร์บีคิวกินกับเพื่อนๆ ให้อิ่มสะใจ", servant: "iskandar" },
+          { text: "ดาร์กช็อกโกแลตเข้มข้น จิบพร้อมชาในมุมส่วนตัวอันเงียบสงบ", servant: "morgan" },
+          { text: "ขนมหวานหน้าตาสดใส แพนเค้กหรือของหวานที่กินแล้วอารมณ์ดี", servant: "merlin" },
+          { text: "อาหารจานหลักที่มีโปรตีนแน่นๆ เนื้อเน้นๆ กินให้อิ่มท้องตามระเบียบ", servant: "artoria" }
+        ]
+      },
+      {
+        theme: "ปฏิกิริยาเมื่อมีคนแซงคิว",
+        prompt: "คุณกำลังยืนต่อแถวอย่างมีระเบียบ แต่อยู่ดีๆ มีคนเดินเข้ามาแทรกแซงคิวหน้าตาเฉย คุณจะทำอย่างไร?",
+        choices: [
+          { text: "มองด้วยสายตาเย็นชาและตัดรำคาญ ไม่ลดตัวลงไปเถียงให้เสียระดับ", servant: "gilgamesh" },
+          { text: "ส่งสายตานิ่งเงียบดั่งความตาย จนอีกฝ่ายรู้สึกตัวแล้วยอมถอยออกไปเอง", servant: "kinghassan" },
+          { text: "สะกิดเตือนอย่างสุภาพแต่หนักแน่น ให้เขาไปต่อท้ายแถวตามกติกา", servant: "artoria" },
+          { text: "พูดแซวหยอกอย่างมีชั้นเชิง ให้คนรอบข้างหันมามองจนคนแซงรู้สึกเกรงใจ", servant: "merlin" },
+          { text: "ก้าวเข้าไปบล็อกทางตรงๆ แล้วพูดเตือนซึ่งๆ หน้าแบบไม่ต้องอ้อมค้อม", servant: "cu" }
+        ]
+      },
+      {
+        theme: "สไตล์การแต่งกาย",
+        prompt: "สไตล์การแต่งตัวที่คุณใส่แล้วรู้สึกมั่นใจ และเป็นตัวของตัวเองมากที่สุดในชีวิตประจำวันคือ?",
+        choices: [
+          { text: "เสื้อผ้าเรียบร้อย เนี้ยบ ถูกกาลเทศะ น่าเชื่อถือและดูมีมารยาท", servant: "artoria" },
+          { text: "มีไอเทมโดดเด่น แบรนด์คุณภาพ มีเอกลักษณ์ที่ใครเห็นก็ต้องสะดุดตา", servant: "gilgamesh" },
+          { text: "คุมโทนสีดำหรือสีเข้ม ลึกลับ เท่ และแฝงความดุดัน", servant: "dantes" },
+          { text: "โทนสีสว่าง ขาวหรือครีม สบายตา ผ้านุ่มสะอาดและเป็นมิตร", servant: "jeanne" },
+          { text: "เสื้อผ้าตัดเย็บประณีต โทนน้ำเงินหรือม่วงเข้ม สง่างามแบบสุขุม", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "วิธีคลายความโกรธ",
+        prompt: "เมื่อคุณมีเรื่องไม่พอใจหรือโกรธจัด คุณมักจะระบายหรือจัดการกับอารมณ์นั้นอย่างไร?",
+        choices: [
+          { text: "ไปออกกำลังกายหนักๆ วิ่งหรือยกเวทให้เหงื่อออกเพื่อสลัดความหงุดหงิด", servant: "cu" },
+          { text: "อยู่คนเดียวในที่เงียบๆ แปลงความขุ่นมัวให้กลายเป็นแรงผลักดันที่จะเอาชนะ", servant: "dantes" },
+          { text: "นั่งสมาธิ หายใจเข้าลึกๆ นิ่งสงบเพื่อตัดความโกรธด้วยเหตุผล", servant: "kinghassan" },
+          { text: "ชวนเพื่อนสนิทมานั่งคุย ระบายความรู้สึกให้โล่งแล้วก้าวข้ามมันไป", servant: "iskandar" },
+          { text: "วางแผนจัดการแก้ไขปัญหาที่ต้นเหตุอย่างเยือกเย็นและเป็นระบบ", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "แนวเพลงโปรดยามพักผ่อน",
+        prompt: "เวลาที่คุณใส่หูฟังในวันที่อยากอยู่กับตัวเอง เพลงแบบไหนที่คุณเปิดบ่อยที่สุด?",
+        choices: [
+          { text: "ดนตรีออร์เคสตรา หรือเพลงมหากาพย์ที่ให้ความรู้สึกทรงพลัง", servant: "artoria" },
+          { text: "เพลงคลาสสิกชั้นสูง เพลงโอเปราที่บรรเลงด้วยความประณีตสมบูรณ์แบบ", servant: "gilgamesh" },
+          { text: "ร็อก จังหวะเร็ว กีตาร์ดิบๆ ปลุกเร้าอะดรีนาลีนและความตื่นเต้น", servant: "cu" },
+          { text: "เพลงอะคูสติกเบาๆ เสียงเปียโนคลอ ฟังแล้วจิตใจสงบผ่อนคลาย", servant: "jeanne" },
+          { text: "เพลงบรรเลงแฟนตาซี ดนตรีโฟล์ก หรือเมโลดี้สดใสแปลกใหม่", servant: "merlin" }
+        ]
+      },
+      {
+        theme: "สภาพโต๊ะทำงานส่วนตัว",
+        prompt: "มองดูโต๊ะทำงานของคุณในยามปกติ มักจะมีสภาพเป็นแบบใดมากที่สุด?",
+        choices: [
+          { text: "สะอาดตา มีระเบียบจัดวางเป็นหมวดหมู่ตามความจำเป็น", servant: "artoria" },
+          { text: "มีของสะสมคุณภาพ ปากการุ่นดี และแก้วเครื่องดื่มสวยงามวางอยู่", servant: "gilgamesh" },
+          { text: "โล่งมาก มีแค่แล็ปท็อป สมุดจด และแก้วน้ำใบเดียวเท่านั้น", servant: "kinghassan" },
+          { text: "มีของตกแต่งน่ารัก หนังสือนวนิยาย หรือของกระจุกกระจิกตามอารมณ์", servant: "merlin" },
+          { text: "เอกสารและแผนงานถูกจัดเรียงพร้อมใช้งานอย่างมีประสิทธิภาพสูงสุด", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "ที่นั่งในร้านกาแฟ",
+        prompt: "เมื่อเดินเข้าไปในคาเฟ่ที่ยังมีที่นั่งว่างหลายจุด คุณมักจะเลือกนั่งตรงไหน?",
+        choices: [
+          { text: "โต๊ะตรงกลางร้านที่สว่างและมองเห็นบรรยากาศโดยรอบได้ชัดเจน", servant: "gilgamesh" },
+          { text: "มุมในสุดที่เงียบสงบ ไม่มีคนเดินผ่านไปมาพลุกพล่าน", servant: "kinghassan" },
+          { text: "โต๊ะใหญ่ที่พร้อมต้อนรับหากมีเพื่อนหรือคนรู้จักตามมานั่งด้วย", servant: "iskandar" },
+          { text: "ที่นั่งริมหน้าต่างที่มองเห็นผู้คนและท้องฟ้าข้างนอกเพลินๆ", servant: "merlin" },
+          { text: "โซฟานุ่มๆ มุมสงบ เหมาะสำหรับนั่งจิบเครื่องดื่มอ่านหนังสือ", servant: "jeanne" }
+        ]
+      },
+      {
+        theme: "ความรู้สึกในวันฝนตกหนัก",
+        prompt: "ในวันหยุดที่คุณวางแผนไว้แต่ฝนกระหน่ำไม่หยุด คุณรู้สึกอย่างไร?",
+        choices: [
+          { text: "ชอบบรรยากาศพายุและเสียงฟ้าร้อง รู้สึกตื่นตัวและมีสมาธิ", servant: "dantes" },
+          { text: "ไม่อยากนั่งอุดอู้ ออกไปลุยฝนหรือหากิจกรรมทำไม่ปล่อยให้วันเสียเปล่า", servant: "cu" },
+          { text: "รู้สึกอบอุ่น ชงเครื่องดื่มร้อนๆ ฟังเสียงฝนตกอย่างสงบใจ", servant: "jeanne" },
+          { text: "เปิดไฟสลัว เปิดเพลงเพลินๆ วาดภาพหรืออ่านเรื่องสนุกๆ สบายใจ", servant: "merlin" },
+          { text: "ใช้เวลาจัดเก็บบ้านและวางแผนงานล่วงหน้าให้เสร็จอย่างมีประโยชน์", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "ของว่างยามบ่าย",
+        prompt: "ช่วงบ่ายแก่ๆ เวลาอยากหาอะไรเคี้ยวเล่น ของว่างที่คุณมักหยิบคือ?",
+        choices: [
+          { text: "เบเกอรี่เนยสด ชาอุ่นๆ หรือสโคนอบร้อนรสชาติดั้งเดิม", servant: "artoria" },
+          { text: "ขนมพิเศษเกรดพรีเมียม หรือของหวานจากร้านชื่อดัง", servant: "gilgamesh" },
+          { text: "ของกินเล่นรสเค็ม ของทอด หรือไส้กรอกย่างง่ายๆ อิ่มท้องไว", servant: "cu" },
+          { text: "มาการอง หรือขนมหวานสีพาสเทลรสชาติหวานละมุน", servant: "merlin" },
+          { text: "ผลไม้สด ขนมปังโฮลวีต หรือของกินเล่นเพื่อสุขภาพเรียบง่าย", servant: "kinghassan" }
+        ]
+      },
+      {
+        theme: "วิธีปลอบใจเพื่อนสนิท",
+        prompt: "เพื่อนสนิทกำลังร้องไห้อย่างหนักเพราะเจอปัญหา คุณจะรับมือกับสถานการณ์นี้อย่างไร?",
+        choices: [
+          { text: "นั่งอยู่ข้างๆ รับฟังเงียบๆ โดยไม่ตัดสิน และคอยซับน้ำตาให้", servant: "jeanne" },
+          { text: "ตบไหล่ให้กำลังใจ ชวนไปกินอะไรอร่อยๆ ให้ลืมเรื่องแย่ๆ ไปก่อน", servant: "iskandar" },
+          { text: "รับฟังด้วยความเข้าใจ แล้วช่วยวิเคราะห์หาทางออกอย่างมีสติทีละขั้น", servant: "artoria" },
+          { text: "บอกให้เขาเข้มแข็ง เปลี่ยนความเจ็บปวดนี้ให้กลายเป็นบทเรียน", servant: "dantes" },
+          { text: "หาเรื่องตลก ชวนคุยเรื่องอื่นเพื่อดึงรอยยิ้มของเขากลับมา", servant: "merlin" }
+        ]
+      },
+      {
+        theme: "เมื่อมีเงินก้อนพิเศษเข้ามา",
+        prompt: "หากคุณได้รับเงินก้อนพิเศษที่ไม่คาดคิด คุณจะนำเงินส่วนใหญ่ไปทำอะไรเป็นอันดับแรก?",
+        choices: [
+          { text: "แบ่งไปดูแลครอบครัว ช่วยเหลือผู้ที่ลำบาก หรือทำประโยชน์เพื่อผู้อื่น", servant: "jeanne" },
+          { text: "ซื้อของที่คุณปรารถนามานาน หรือลงทุนกับของสะสมคุณภาพสูง", servant: "gilgamesh" },
+          { text: "จัดทริปหรือเลี้ยงสังสรรค์ฉลองกับเพื่อนฝูงให้ทุกคนมีความสุข", servant: "iskandar" },
+          { text: "เก็บออมและจัดสรรเพื่อความมั่นคงในอนาคตตามแผนการเงิน", servant: "artoria" },
+          { text: "ลงทุนต่อยอดเพื่อสร้างความมั่นคงและอำนาจทางการเงินระยะยาว", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "นิสัยการตอบข้อความ",
+        prompt: "ในชีวิตประจำวัน สไตล์การตอบแชทของคุณมักเป็นแบบใด?",
+        choices: [
+          { text: "ตอบเมื่อสะดวกและอยากตอบ ไม่ชอบให้ใครมากะเกณฑ์เวลา", servant: "gilgamesh" },
+          { text: "สั้น ตรงประเด็น กระชับ เข้าใจง่าย ไม่เวิ่นเว้อ", servant: "kinghassan" },
+          { text: "ชอบส่งสติกเกอร์ มีม หรือหยอดมุกตลกเพื่อสร้างบรรยากาศ", servant: "merlin" },
+          { text: "ตอบสุภาพ ชัดเจน และพยายามไม่ปล่อยให้ข้อความค้างนาน", servant: "artoria" },
+          { text: "ส่งข้อความเสียงหรือโทรคุยทันที เพราะได้อารมณ์และเร็วกว่า", servant: "iskandar" }
+        ]
+      },
+      {
+        theme: "เมื่อทำของรักตกแตก",
+        prompt: "ของรักชิ้นสำคัญของคุณพลัดตกแตกเสียหาย อารมณ์แรกที่คุณตอบสนองคือ?",
+        choices: [
+          { text: "นิ่งสงบ ยอมรับว่าสิ่งของย่อมมีวันเสื่อมสลาย แล้วกวาดเก็บเรียบร้อย", servant: "kinghassan" },
+          { text: "หงุดหงิดชั่วครู่ แล้วคิดว่าเดี๋ยวหาชิ้นใหม่ที่ดียิ่งกว่าเดิมมาทดแทน", servant: "gilgamesh" },
+          { text: "เสียดายแต่รีบตั้งสติทำความสะอาด เพื่อไม่ให้คนอื่นมาโดนเศษแก้ว", servant: "artoria" },
+          { text: "บ่นพึมพำกับความซุ่มซ่ามของตัวเอง แล้วลองมองหาทางซ่อมดูแบบสบายๆ", servant: "cu" },
+          { text: "จดจำความประมาทนี้ไว้เป็นบทเรียนเตือนใจอย่างจริงจัง", servant: "dantes" }
+        ]
+      },
+      {
+        theme: "กลิ่นหอมที่รู้สึกสบายใจ",
+        prompt: "กลิ่นหอมแบบไหนที่คุณสูดดมแล้วรู้สึกผ่อนคลายและเข้ากับตัวคุณที่สุด?",
+        choices: [
+          { text: "กลิ่นดอกไม้ป่า ลาเวนเดอร์ หรือดอกไม้หวานโปร่งเบาสบาย", servant: "merlin" },
+          { text: "กลิ่นไม้กฤษณา กำยาน หรืออำพัน หรูหราและลุ่มลึก", servant: "gilgamesh" },
+          { text: "กลิ่นหนังแท้ กลิ่นไม้สน หรือกลิ่นกาแฟคั่วเข้ม ลึกลับน่าค้นหา", servant: "dantes" },
+          { text: "กลิ่นลมทะเล คลื่นน้ำ และซิตรัสเปรี้ยวสดชื่น มีชีวิตชีวา", servant: "cu" },
+          { text: "กลิ่นสบู่สะอาด แป้งเด็ก หรือผ้าซักตากแดดใหม่ๆ บริสุทธิ์อบอุ่น", servant: "jeanne" }
+        ]
+      },
+      {
+        theme: "สัตว์เลี้ยงคู่ใจ",
+        prompt: "หากคุณสามารถเลือกสัตว์เลี้ยงมาเป็นเพื่อนคู่ชีวิตได้ คุณจะเลือกสิ่งใด?",
+        choices: [
+          { text: "สุนัขที่ร่าเริง ซื่อสัตย์ ว่องไว พร้อมวิ่งเล่นและลุยไปด้วยกัน", servant: "cu" },
+          { text: "สัตว์ที่สง่างาม โดดเด่น น่าเกรงขามดั่งราชสีห์", servant: "gilgamesh" },
+          { text: "นกพิราบสีขาว หรือสัตว์ตัวเล็กๆ ที่อ่อนโยนและน่าทะนุถนอม", servant: "jeanne" },
+          { text: "นกนักล่าหรือกาที่เฉลียวฉลาด เงียบขรึมและรักสันโดษ", servant: "kinghassan" },
+          { text: "แมวขนสวยที่หยิ่งทะนง รักความสงบ และผูกพันกับเจ้าของอย่างลึกซึ้ง", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "บ่ายวันอาทิตย์ที่ไร้ภาระ",
+        prompt: "ในบ่ายวันหยุดที่ไม่มีงานค้าง คุณมักจะใช้เวลาทำอะไรมากที่สุด?",
+        choices: [
+          { text: "อ่านหนังสือ พัฒนาทักษะส่วนตัว หรือเตรียมพร้อมสำหรับสัปดาห์ใหม่", servant: "artoria" },
+          { text: "ชวนเพื่อนหรือคนใกล้ชิดออกไปเปิดหูเปิดตา กินของอร่อยนอกบ้าน", servant: "iskandar" },
+          { text: "นอนพักผ่อน เล่นเกม หรือออกไปยืดเส้นยืดสายกลางแจ้งชิลๆ", servant: "cu" },
+          { text: "ทำขนม ชงชาร้อนๆ นั่งฟังเพลงสบายๆ ภายในบ้านที่เงียบสงบ", servant: "jeanne" },
+          { text: "นั่งมองดูผู้คน หาแรงบันดาลใจใหม่ๆ จากสิ่งรอบตัวอย่างเพลิดเพลิน", servant: "merlin" }
+        ]
+      },
+      {
+        theme: "การรับมือความผิดพลาด",
+        prompt: "เมื่อเป้าหมายที่คุณตั้งใจทำกลับไม่ประสบความสำเร็จตามที่หวัง คุณคิดอย่างไร?",
+        choices: [
+          { text: "ไม่ยอมแพ้เด็ดขาด ตราบใดที่ยังมีลมหายใจจะลุกขึ้นสู้ใหม่เสมอ", servant: "dantes" },
+          { text: "ยอมรับความจริง ทบทวนจุดบกพร่องอย่างมีเหตุผล แล้วฝึกฝนเพิ่ม", servant: "artoria" },
+          { text: "คิดว่าแพ้ชนะเป็นเรื่องธรรมดา ปล่อยวางแล้วค่อยหาจังหวะใหม่", servant: "cu" },
+          { text: "ขอบคุณบทเรียนที่ผ่านมา และเชื่อมั่นว่าความพยายามไม่มีวันสูญเปล่า", servant: "jeanne" },
+          { text: "วิเคราะห์สาเหตุเชิงลึก ปรับแผนกลยุทธ์ใหม่เพื่อไม่ให้ผิดพลาดซ้ำ", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "เครื่องดื่มก่อนนอน",
+        prompt: "ยามค่ำคืนก่อนจะเข้านอน เครื่องดื่มที่คุณชอบจิบคืออะไร?",
+        choices: [
+          { text: "เครื่องดื่มเย็นฉ่ำให้สดชื่น ดื่มคลายเหนื่อยหลังจากผ่านวันอันยาวนาน", servant: "cu" },
+          { text: "เครื่องดื่มรสละเมียดละไม บ่มอย่างดี เพื่อความรื่นรมย์ของชีวิต", servant: "gilgamesh" },
+          { text: "นมอุ่นผสมน้ำผึ้ง หรือน้ำสมุนไพรอุ่นๆ ช่วยให้หลับสบาย", servant: "jeanne" },
+          { text: "ชาเปปเปอร์มินต์ หรือชาคาโมมายล์ กลิ่นหอมช่วยให้สมองโล่ง", servant: "merlin" },
+          { text: "น้ำเปล่าสะอาดหนึ่งแก้ว ดื่มเพื่อความสดชื่นและเรียบง่าย", servant: "kinghassan" }
+        ]
+      },
+      {
+        theme: "มุมมองต่อความอยุติธรรม",
+        prompt: "เมื่อเห็นคนถูกเอาเปรียบหรือไม่ได้รับความเป็นธรรม คุณรู้สึกอย่างไร?",
+        choices: [
+          { text: "ต้องต่อสู้เพื่อทวงคืนความถูกต้องและความยุติธรรมให้ถึงที่สุด", servant: "dantes" },
+          { text: "ต้องใช้กฎระเบียบและหลักการที่ถูกต้องเข้ามาคลี่คลายอย่างเป็นธรรม", servant: "artoria" },
+          { text: "เมตตาและหาทางเยียวยาจิตใจของผู้ที่ได้รับผลกระทบด้วยความอ่อนโยน", servant: "jeanne" },
+          { text: "ผู้กระทำผิดต้องได้รับการลงทัณฑ์ตามสัจธรรมอย่างไม่อาจหลีกเลี่ยง", servant: "kinghassan" },
+          { text: "ตัดรากถอนโคนอำนาจของคนที่ทำผิด เพื่อไม่ให้เขาก่อความเดือดร้อนได้อีก", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "บทบาทในกลุ่มเพื่อน",
+        prompt: "เมื่ออยู่ในกลุ่มเพื่อน คุณมักทำหน้าที่อะไรโดยธรรมชาติ?",
+        choices: [
+          { text: "ผู้ชักชวน บิวต์อารมณ์ และพาทุกคนไปสัมผัสประสบการณ์สนุกๆ", servant: "iskandar" },
+          { text: "คนสร้างเสียงหัวเราะและสร้างรอยยิ้มให้วงสนทนาไม่น่าเบื่อ", servant: "merlin" },
+          { text: "คนดูแลความเรียบร้อย คอยประสานงานและใส่ใจรายละเอียดแทนทุกคน", servant: "artoria" },
+          { text: "ผู้รับฟังที่อบอุ่น คอยดูแลความรู้สึกของเพื่อนๆ ทุกคนในกลุ่ม", servant: "jeanne" },
+          { text: "คนพูดน้อยแต่น่าเชื่อถือ คอยให้คำปรึกษาที่ตรงจุดและเด็ดขาด", servant: "kinghassan" }
+        ]
+      },
+      {
+        theme: "ที่พักสำหรับการเดินทาง",
+        prompt: "เมื่อต้องเลือกที่พักสำหรับวันพักผ่อน คุณจะให้ความสำคัญกับสิ่งใดที่สุด?",
+        choices: [
+          { text: "ความหรูหรา สะดวกสบายสูงสุด และบริการที่ยอดเยี่ยมไร้ที่ติ", servant: "gilgamesh" },
+          { text: "ความสงบ เรียบง่าย อยู่ใกล้ชิดธรรมชาติและปราศจากเสียงรบกวน", servant: "kinghassan" },
+          { text: "ดีไซน์สวยงาม มีเอกลักษณ์ มีความเป็นส่วนตัวสูงและสง่างาม", servant: "morgan" },
+          { text: "ที่พักที่มีพื้นที่ทำกิจกรรมร่วมกัน หรือแคมป์ปิ้งสบายๆ กลางแจ้ง", servant: "iskandar" },
+          { text: "ความสะอาด ปลอดภัย ได้มาตรฐาน และเดินทางสะดวก", servant: "artoria" }
+        ]
+      },
+      {
+        theme: "เมื่อถูกเข้าใจผิด",
+        prompt: "หากมีคนเข้าใจเจตนาของคุณผิดและกำลังพูดถึงคุณในแง่ร้าย คุณจะทำอย่างไร?",
+        choices: [
+          { text: "ไม่ให้ค่าและไม่เสียเวลาอธิบาย ความจริงคือความจริง", servant: "gilgamesh" },
+          { text: "อธิบายด้วยข้อเท็จจริงอย่างสุภาพ หากเขาไม่ฟังก็ปล่อยให้เวลาพิสูจน์", servant: "artoria" },
+          { text: "ไม่สนใจ ใครอยากคิดอะไรก็ช่าง สนใจแค่คนที่สำคัญกับเราก็พอ", servant: "cu" },
+          { text: "ให้อภัยและเข้าใจว่าคนเรามองโลกไม่เหมือนกัน ไม่ถือโทษโกรธแค้น", servant: "jeanne" },
+          { text: "จัดการชี้แจงด้วยหลักฐานที่ชัดเจนจนอีกฝ่ายต้องยอมรับข้อเท็จจริง", servant: "morgan" }
+        ]
+      },
+      {
+        theme: "วันหยุดในฝัน",
+        prompt: "หากคุณมีเวลาว่างยาวๆ โดยไม่ต้องกังวลเรื่องงาน สิ่งที่คุณอยากทำคือ?",
+        choices: [
+          { text: "ออกเดินทางท่องเที่ยวสำรวจดินแดนใหม่ๆ ที่ยังไม่เคยไป", servant: "iskandar" },
+          { text: "พักผ่อนในสถานที่สวยงามและเป็นส่วนตัว ดื่มด่ำกับความสงบอย่างมีระดับ", servant: "morgan" },
+          { text: "อยู่บ้าน เดินเล่นในสวน อ่านหนังสือ และใช้ชีวิตแบบไม่ต้องรีบร้อน", servant: "merlin" },
+          { text: "ปลีกวิเวกไปอยู่ในสถานที่ธรรมชาติเงียบสงบ ชำระล้างจิตใจให้โล่ง", servant: "kinghassan" },
+          { text: "เล่นกีฬา ผจญภัยกลางแจ้ง หรือไปตั้งแคมป์ริมแม่น้ำกับเพื่อนๆ", servant: "cu" }
+        ]
+      },
+      {
+        theme: "รสชาติขนมหวานที่ชอบ",
+        prompt: "เวลาเลือกขนมหรือไอศกรีม รสชาติแนวไหนที่คุณมักสั่งเป็นประจำ?",
+        choices: [
+          { text: "ช็อกโกแลตเข้มข้น รสขมนำหวานตาม หอมเมล็ดโกโก้", servant: "dantes" },
+          { text: "รสนม นุ่มนวล ละมุนลิ้น ไม่หวานจัดจนเลี่ยน", servant: "jeanne" },
+          { text: "รสคาราเมลเกลือ หรือรสชาติพรีเมียมที่มีมิติซับซ้อน", servant: "gilgamesh" },
+          { text: "มัทฉะแท้เข้มข้น หรือชาเอิร์ลเกรย์ที่มีกลิ่นหอมเฉพาะตัว", servant: "morgan" },
+          { text: "รสเบอร์รี เปรี้ยวอมหวาน สดชื่นและมีชีวิตชีวา", servant: "merlin" }
+        ]
+      },
+      {
+        theme: "มุมหนังสือที่สนใจ",
+        prompt: "เมื่อเดินเข้าไปในร้านหนังสือ แผนกที่คุณมักจะแวะเดินดูบ่อยที่สุดคือ?",
+        choices: [
+          { text: "ประวัติศาสตร์ ชีวประวัติบุคคลสำคัญ หรือการพัฒนาตนเอง", servant: "artoria" },
+          { text: "วรรณกรรมแฟนตาซี นิยาย หรือเรื่องเล่าจินตนาการ", servant: "merlin" },
+          { text: "หนังสือท่องเที่ยว แผนที่ และการเดินทางรอบโลก", servant: "iskandar" },
+          { text: "ปรัชญา การใช้ชีวิต และการดูแลจิตใจ", servant: "jeanne" },
+          { text: "นิยายสืบสวน การต่อสู้ หรือเรื่องราวการเอาชนะอุปสรรค", servant: "dantes" }
+        ]
+      },
+      {
+        theme: "คุณสมบัติของคู่ชีวิต",
+        prompt: "สิ่งที่คุณมองหาและให้ความสำคัญมากที่สุดในตัวคนรักคืออะไร?",
+        choices: [
+          { text: "ความซื่อสัตย์ ไว้วางใจได้ และพร้อมอยู่เคียงข้างกันอย่างมั่นคง", servant: "morgan" },
+          { text: "ความจริงใจ มีเกียรติ และพร้อมเดินหน้าฝ่าฟันอุปสรรคไปด้วยกัน", servant: "artoria" },
+          { text: "ความอ่อนโยน เมตตา และเข้าใจในความรู้สึกของเราอย่างลึกซึ้ง", servant: "jeanne" },
+          { text: "ความร่าเริง ใจกว้าง และมีพลังบวกที่ทำให้ชีวิตมีชีวิตชีวา", servant: "iskandar" },
+          { text: "ความเข้าใจในมุมมืดของกันและกัน และยอมรับในตัวตนที่แท้จริงได้", servant: "dantes" }
+        ]
+      },
+      {
+        theme: "คืนพระจันทร์เต็มดวง",
+        prompt: "เมื่อคุณแหงนมองดวงจันทร์เต็มดวงบนท้องฟ้า ความรู้สึกแรกที่ผุดขึ้นมาคือ?",
+        choices: [
+          { text: "ความสงบนิ่งที่เตือนใจว่าความจริงย่อมส่องสว่างเหนือความมืด", servant: "kinghassan" },
+          { text: "ความงดงามชวนฝันที่จุดประกายจินตนาการและเรื่องราวในใจ", servant: "merlin" },
+          { text: "ความรู้สึกภูมิใจในตนเองและชื่นชมความยิ่งใหญ่ของโลกใบนี้", servant: "gilgamesh" },
+          { text: "ความเงียบสงบที่เหมาะกับการครุ่นคิดและวางแผนในใจ", servant: "morgan" },
+          { text: "ความสบายใจ อยากนั่งจิบเครื่องดื่มเย็นๆ รับลมยามค่ำ", servant: "cu" }
+        ]
+      },
+      {
+        theme: "คำพูดเตือนใจเมื่อท้อแท้",
+        prompt: "ในวันที่รู้สึกหมดแรง ประโยคเตือนใจที่ช่วยให้คุณยังมีกำลังใจสู้ต่อคืออะไร?",
+        choices: [
+          { text: "“ตราบใดที่ยังมีความหวังและไม่ยอมแพ้ เราจะผ่านมันไปได้”", servant: "dantes" },
+          { text: "“หน้าที่และความรับผิดชอบยังอยู่ เราต้องอดทนและทำให้ดีที่สุด”", servant: "artoria" },
+          { text: "“ชีวิตยังต้องไปต่อ หนทางข้างหน้ายังมีเรื่องสนุกรออยู่อีกเยอะ!”", servant: "iskandar" },
+          { text: "“ความสงบและความเชื่อมั่นจะนำพาแสงสว่างกลับมาเสมอ”", servant: "jeanne" },
+          { text: "“ความมั่นคงในจิตใจ จะช่วยให้เราก้าวข้ามทุกปัญหาได้อย่างสงบ”", servant: "kinghassan" }
+        ]
+      },
+      {
+        theme: "บทสรุปตัวตนที่แท้จริง",
+        prompt: "ข้อสุดท้าย หากให้อธิบายตัวตนของคุณด้วยประโยคสั้นๆ คุณคือใคร?",
+        choices: [
+          { text: "ผู้ที่ยึดมั่นในความซื่อสัตย์ ระเบียบวินัย และทำหน้าที่อย่างเต็มที่เสมอ", servant: "artoria" },
+          { text: "ผู้ที่มีความมั่นใจในศักยภาพ มีรสนิยม และภูมิใจในตัวเอง", servant: "gilgamesh" },
+          { text: "ผู้ที่รักอิสระ จริงใจ ตรงไปตรงมา และมีชีวิตเพื่อมิตรภาพ", servant: "cu" },
+          { text: "ผู้ที่มองโลกด้วยรอยยิ้ม อารมณ์ดี และมอบความสุขให้คนรอบข้าง", servant: "merlin" },
+          { text: "ผู้ที่รักความสงบ หนักแน่นดั่งหินผา และยึดมั่นในความถูกต้อง", servant: "kinghassan" }
+        ]
+      }
+    ];
+
+    const servants = {
+      artoria: {
+        name: "Artoria Pendragon",
+        classBadge: "SABER",
+        title: "ราชาอัศวินผู้กวัดแกว่งดาบแห่งพันธสัญญา (King of Knights)",
+        alignment: "Lawful Good",
+        npName: "Excalibur",
+        npSub: "ดาบพันธสัญญาแห่งชัยชนะ (Anti-Fortress)",
+        dominantTrait: "ระเบียบวินัย & ความซื่อสัตย์",
+        quote: "“ขานรับการอัญเชิญตามพันธสัญญา... จิตวิญญาณแห่งเกียรติยศและความซื่อตรงของคุณ ช่างสอดคล้องกับวิถีอัศวินยิ่งนัก”",
+        analysis: "คุณเป็นคนมีระเบียบวินัยสูง ซื่อสัตย์ และมีความรับผิดชอบต่อหน้าที่อย่างยิ่ง คุณให้ความเคารพในกฎเกณฑ์และผู้อื่นเสมอ พร้อมที่จะทุ่มเทและแบกรับภาระเพื่อปกป้องคนที่คุณหวงแหนอย่างแท้จริง",
+        skills: [
+          { name: "Charisma B", desc: "ภาวะผู้นำที่สร้างแรงบันดาลใจและเสริมความมั่นใจให้ทีม" },
+          { name: "Mana Burst A", desc: "การทุ่มเทพลังเต็มร้อยเพื่อเป้าหมายสำคัญ" },
+          { name: "Dragon Core EX", desc: "จิตใจหนักแน่นมั่นคงดั่งหินผา" }
+        ]
+      },
+      gilgamesh: {
+        name: "Gilgamesh",
+        classBadge: "ARCHER",
+        title: "ปฐมกษัตริย์แห่งวีรชน (King of Heroes)",
+        alignment: "Chaotic Good",
+        npName: "Enuma Elish",
+        npSub: "ดวงดาราที่แยกฟ้าและดิน (Anti-World)",
+        dominantTrait: "ความมั่นใจสูง & รสนิยมประณีต",
+        quote: "“ฮ่าๆๆ! รสนิยมและความมั่นใจในตัวเจ้านับว่าไม่เลว! ข้าจะยอมรับเจ้าเป็นคู่สนทนาสักครา”",
+        analysis: "คุณมีความมั่นใจในตัวเองสูง มีรสนิยมที่ประณีต ชื่นชอบสิ่งที่ดีที่สุดและไม่ยอมลดมาตรฐานของตัวเองลงง่ายๆ คุณมีวิสัยทัศน์ที่กว้างไกล ไม่ชอบการถูกตีกรอบ และภาคภูมิใจในความสามารถของตัวเองอย่างเต็มเปี่ยม",
+        skills: [
+          { name: "Charisma A+", desc: "เสน่ห์และความมั่นใจที่ทำให้ผู้คนยอมรับ" },
+          { name: "Golden Rule A", desc: "การดึงดูดสิ่งที่ดีที่สุดและโอกาสอันมีค่าเข้าสู่ชีวิต" },
+          { name: "Treasury of Babylon", desc: "คลังปัญญา ประสบการณ์ และความพร้อมรอบด้าน" }
+        ]
+      },
+      cu: {
+        name: "Cú Chulainn",
+        classBadge: "LANCER",
+        title: "หมาล่าเนื้อแห่งคูลันน์ (Child of Light)",
+        alignment: "Lawful Neutral",
+        npName: "Gáe Bulg",
+        npSub: "หอกเสียบทะลวงใจ (Anti-Unit)",
+        dominantTrait: "รักอิสระ & ตรงไปตรงมา",
+        quote: "“โย่! ตอบรับการอัญเชิญแล้ว! นิสัยสบายๆ ลุยๆ แบบนายนี่ถูกคอฉันชะมัด มีอะไรสั่งมาได้เลย!”",
+        analysis: "คุณเป็นคนติดดิน ตรงไปตรงมา มีน้ำใจนักกีฬา รักอิสระ และให้ความสำคัญกับมิตรภาพอย่างแท้จริง คุณไม่ชอบเรื่องยุ่งยากซับซ้อน ปรับตัวเข้ากับสถานการณ์ได้เก่ง และไม่เคยย่อท้อต่อความเหน็ดเหนื่อย",
+        skills: [
+          { name: "Battle Continuation", desc: "จิตใจเข้มแข็ง ล้มแล้วลุกขึ้นใหม่ได้เสมอ" },
+          { name: "Protection from Arrows", desc: "ไหวพริบและความคล่องแคล่วในการเอาตัวรอด" },
+          { name: "Disengage C", desc: "การปล่อยวางและรีเซ็ตอารมณ์ได้อย่างรวดเร็ว" }
+        ]
+      },
+      merlin: {
+        name: "Merlin",
+        classBadge: "CASTER",
+        title: "จอมเวทแห่งบุปผา (Magus of Flowers)",
+        alignment: "Lawful Good",
+        npName: "Garden of Avalon",
+        npSub: "สรวงสวรรค์ที่ปิดตายชั่วนิรันดร์ (Support)",
+        dominantTrait: "จินตนาการ & อารมณ์ขัน",
+        quote: "“สวัสดี! จิตวิญญาณแห่งความหวังและรอยยิ้มของคุณ ชวนให้โลกสดใสขึ้นมาทันตาเลยล่ะ!”",
+        analysis: "คุณมีจินตนาการที่เปิดกว้าง มีอารมณ์ขัน มองโลกในแง่ดี และชอบสร้างรอยยิ้มให้กับคนรอบตัว คุณมีความยืดหยุ่นในการใช้ชีวิต เป็นที่ปรึกษาที่ช่วยให้คนอื่นผ่อนคลายและมองเห็นทางออกด้วยมุมมองใหม่ๆ",
+        skills: [
+          { name: "Dreamlike Charisma", desc: "เสน่ห์ที่อบอุ่นและช่วยฟื้นฟูกำลังใจให้ผู้อื่น" },
+          { name: "Illusion A", desc: "การมองข้ามความตึงเครียดและเปลี่ยนวิกฤตให้เป็นโอกาส" },
+          { name: "Hero Creation EX", desc: "การผลักดันและดึงศักยภาพสูงสุดของคนรอบตัวออกมา" }
+        ]
+      },
+      kinghassan: {
+        name: "First Hassan",
+        classBadge: "ASSASSIN",
+        title: "เฒ่าแห่งขุนเขา (Old Man of the Mountain)",
+        alignment: "Lawful Evil",
+        npName: "Azrael",
+        npSub: "เสียงระฆังแห่งการบอกลา (Anti-Unit)",
+        dominantTrait: "ความสงบนิ่ง & ความเด็ดขาด",
+        quote: "“จงสดับ... เสียงระฆังยามเย็นได้บอกเล่าถึงความสัตย์ซื่อและสัจจะอันเด็ดเดี่ยวในดวงใจเจ้าแล้ว”",
+        analysis: "คุณเป็นคนรักความสงบ หนักแน่นดั่งหินผา พูดน้อยแต่ทำจริง มีหลักการและสัจจะในใจที่ไม่ยอมสั่นคลอน คุณไม่หวั่นไหวต่อคำพูดไร้สาระ และเป็นคนที่ทุกคนรอบข้างรู้สึกได้ถึงความมั่นคงปลอดภัยเมื่ออยู่ใกล้",
+        skills: [
+          { name: "At The Boundary EX", desc: "ความนิ่งสงบที่ไม่หวั่นไหวต่อแรงกดดันใดๆ" },
+          { name: "Evening Bell EX", desc: "การตัดสินใจที่เฉียบขาดและเด็ดเดี่ยว" },
+          { name: "Battle Continuation EX", desc: "ความอดทนและความมุ่งมั่นไร้ขีดจำกัด" }
+        ]
+      },
+      dantes: {
+        name: "Edmond Dantès",
+        classBadge: "AVENGER",
+        title: "ราชาแห่งถ้ำ (The Count of Monte Cristo)",
+        alignment: "Chaotic Evil",
+        npName: "Enfer Château d'If",
+        npSub: "การหลบหนีจากนรกแห่งคุกคุมขัง (Anti-Unit)",
+        dominantTrait: "ความไม่ยอมแพ้ & พลังใจแรงกล้า",
+        quote: "“รอคอยและมีความหวัง! เปลวไฟในใจเจ้าที่ไม่เคยมอดดับ ได้สะท้อนตัวตนของข้าออกมา!”",
+        analysis: "คุณเป็นคนมีจิตใจแข็งแกร่งอย่างยิ่ง มีพลังความมุ่งมั่นที่ไม่ยอมก้มหัวให้ความล้มเหลว เมื่อตั้งเป้าหมายแล้วจะทุ่มเทจนถึงที่สุด ความเจ็บปวดและอุปสรรคคือเชื้อเพลิงชั้นดีที่ผลักดันให้คุณพัฒนาอย่างก้าวกระโดด",
+        skills: [
+          { name: "Avenger A", desc: "การเปลี่ยนความกดดันและความเจ็บปวดให้เป็นพลัง" },
+          { name: "Determination of Steel", desc: "จิตใจเหล็กกล้าที่ไม่มีวันพังทลาย" },
+          { name: "Golden Rule (Calamity)", desc: "ความสามารถในการกอบกู้สถานการณ์ยามวิกฤต" }
+        ]
+      },
+      jeanne: {
+        name: "Jeanne d'Arc",
+        classBadge: "RULER",
+        title: "สตรีศักดิ์สิทธิ์แห่งออร์ลีย็อง (Holy Maiden)",
+        alignment: "Lawful Good",
+        npName: "Luminosité Eternelle",
+        npSub: "ธงประกาศิตคุ้มครองสวรรค์ (Anti-Unit)",
+        dominantTrait: "ความเมตตา & จิตใจบริสุทธิ์",
+        quote: "“ขอพระผู้เป็นเจ้าอวยพร... จิตใจอันอบอุ่นและเปี่ยมด้วยความอ่อนโยนของคุณ คือแสงสว่างนำทางแท้จริง”",
+        analysis: "คุณมีจิตใจที่อ่อนโยน เปี่ยมด้วยความเข้าอกเข้าใจและพร้อมให้อภัยผู้อื่นเสมอ คุณไม่ชอบความขัดแย้ง และมักจะเป็นศูนย์รวมความสบายใจของคนรอบข้าง ผู้คนมักจะรู้สึกไว้วางใจและได้รับการเยียวยาเมื่อได้พูดคุยกับคุณ",
+        skills: [
+          { name: "Revelation A", desc: "สัญชาตญาณและความรู้สึกที่นำทางไปสู่สิ่งที่ดีงาม" },
+          { name: "Divine Protection", desc: "เกราะคุ้มครองทางจิตใจที่อบอุ่นและเปี่ยมสุข" },
+          { name: "True Name Discernment", desc: "ความเข้าใจลึกซึ้งในเจตนาและความรู้สึกของผู้อื่น" }
+        ]
+      },
+      morgan: {
+        name: "Morgan",
+        classBadge: "BERSERKER",
+        title: "ราชินีผู้ปกครองบริเตน (Queen of Faerie)",
+        alignment: "Lawful Evil",
+        npName: "Roadless Camelot",
+        npSub: "คาเมล็อตที่ไม่มีวันเอื้อมถึง (Anti-Fortress)",
+        dominantTrait: "สุขุมลุ่มลึก & อำนาจปกครอง",
+        quote: "“ข้าตอบรับการเรียกหา... จิตใจอันเยือกเย็นและหนักแน่นของเจ้า เหมาะสมยิ่งที่จะยืนเคียงข้างบัลลังก์ของข้า”",
+        analysis: "คุณเป็นคนสุขุม ฉลาดรอบคอบ และมีระเบียบในการจัดการสูง คุณไม่ชอบความโกลาหล และมักจะควบคุมสถานการณ์ต่างๆ ให้อยู่ในความสงบเรียบร้อยได้ดี คุณอาจดูเข้าถึงยากในตอนแรก แต่กับคนที่คุณแคร์ คุณจะทุ่มเทปกป้องอย่างที่สุด",
+        skills: [
+          { name: "Charisma of the Queen", desc: "การควบคุมดูแลและจัดการสิ่งต่างๆ อย่างมีแบบแผน" },
+          { name: "Protection of the Lake", desc: "ความสามารถในการจัดสรรและบริหารทรัพยากรอย่างคุ้มค่า" },
+          { name: "Fairy Eyes A", desc: "สายตาที่มองทะลุถึงแก่นแท้ของปัญหาอย่างรวดเร็ว" }
+        ]
+      },
+      iskandar: {
+        name: "Iskandar",
+        classBadge: "RIDER",
+        title: "ราชาผู้พิชิต (King of Conquerors)",
+        alignment: "Neutral Good",
+        npName: "Ionian Hetairoi",
+        npSub: "กองทัพแห่งราชาผู้พิชิต (Anti-Army)",
+        dominantTrait: "ความใจกว้าง & มิตรภาพอันยิ่งใหญ่",
+        quote: "“โอ้! ยินดีที่ได้พบ! สายตาอันเต็มไปด้วยความกระตือรือร้นของเจ้า ช่างน่าประทับใจยิ่งนัก มาออกเดินทางไปด้วยกันเถอะ!”",
+        analysis: "คุณเป็นคนใจกว้าง มองโลกในมุมกว้าง ร่าเริง และรักการผจญภัย คุณให้คุณค่ากับมิตรภาพเหนือสิ่งอื่นใด พร้อมที่จะดึงทุกคนมาร่วมทางและมีความสุขไปด้วยกัน ความกระตือรือร้นของคุณคือพลังขับเคลื่อนที่ช่วยให้คนรอบข้างกล้าทำสิ่งใหม่ๆ",
+        skills: [
+          { name: "Charisma A", desc: "พลังดึงดูดใจที่ทำให้ทุกคนอยากร่วมเดินทางไปด้วย" },
+          { name: "Military Tactics B", desc: "การวางแผนชีวิตและการรับมือกับความท้าทายด้วยใจกล้าหาญ" },
+          { name: "Conqueror's Spirit", desc: "ความกระหายในการเรียนรู้และเปิดรับประสบการณ์ใหม่ๆ" }
+        ]
+      }
+    };
+
+    // Monochrome class icons (stylized silhouettes, not reproductions of
+    // official artwork — used since copyrighted Servant art can't be pulled
+    // in directly from the wiki).
+    const classIcons = {
+      SABER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 6 L32 42"/><path d="M22 42 L42 42"/><path d="M26 42 L26 52 L32 58 L38 52 L38 42"/><path d="M27 12 L37 12"/></svg>`,
+      ARCHER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10 C18 10 46 20 46 32 C46 44 18 54 18 54"/><path d="M18 10 L18 54"/><path d="M14 32 L48 32"/><path d="M42 26 L48 32 L42 38"/></svg>`,
+      LANCER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 4 L32 58"/><path d="M32 4 L22 18 L32 16 L42 18 Z"/></svg>`,
+      RIDER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="20"/><path d="M32 12 L32 20"/><path d="M32 44 L32 52"/><path d="M12 32 L20 32"/><path d="M44 32 L52 32"/></svg>`,
+      CASTER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 54 L44 10"/><path d="M44 10 L50 6 L54 10 L50 16 Z"/><path d="M18 58 L26 50"/></svg>`,
+      ASSASSIN: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 6 L38 30 L32 58 L26 30 Z"/><path d="M24 22 L40 22"/></svg>`,
+      BERSERKER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10 C10 14 10 26 18 30 L30 24 Z"/><path d="M44 54 C54 50 54 38 46 34 L34 40 Z"/><path d="M28 26 L36 38"/></svg>`,
+      RULER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 6 L32 50"/><path d="M32 12 C40 12 46 18 46 18 C46 18 40 26 32 26"/><path d="M24 58 L40 58"/></svg>`,
+      AVENGER: `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8 C20 8 14 18 14 28 C14 40 22 48 32 56 C42 48 50 40 50 28 C50 18 44 8 32 8 Z"/><path d="M26 26 L30 30 L38 20"/></svg>`
+    };
+    const defaultClassIcon = `<svg viewBox="0 0 64 64" class="w-12 h-12" fill="none" stroke="#f4f4f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="22"/></svg>`;
+
+    // State
+    let currentIndex = 0;
+    const scores = {
+      artoria: 0,
+      gilgamesh: 0,
+      cu: 0,
+      merlin: 0,
+      kinghassan: 0,
+      dantes: 0,
+      jeanne: 0,
+      morgan: 0,
+      iskandar: 0
+    };
+
+    // Elements
+    const screenIntro = document.getElementById('screenIntro');
+    const screenQuiz = document.getElementById('screenQuiz');
+    const screenResult = document.getElementById('screenResult');
+
+    const btnStart = document.getElementById('btnStart');
+    const labelStep = document.getElementById('labelStep');
+    const labelCategory = document.getElementById('labelCategory');
+    const barProgress = document.getElementById('barProgress');
+    const textQuestion = document.getElementById('textQuestion');
+    const optionsContainer = document.getElementById('optionsContainer');
+
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const soundStatusText = document.getElementById('soundStatusText');
+
+    // SFX toggle
+    soundToggleBtn.addEventListener('click', () => {
+      sfxEnabled = !sfxEnabled;
+      soundStatusText.textContent = sfxEnabled ? 'ON' : 'OFF';
+      playTone(550, 0.05);
+    });
+
+    // Start
+    btnStart.addEventListener('click', () => {
+      playTone(600, 0.06);
+      currentIndex = 0;
+      Object.keys(scores).forEach(k => scores[k] = 0);
+      screenIntro.classList.add('hidden');
+      screenQuiz.classList.remove('hidden');
+      screenQuiz.classList.add('flex');
+      renderQuestion();
+    });
+
+    function renderQuestion() {
+      const q = questions[currentIndex];
+      const stepNum = currentIndex + 1;
+      const formattedNum = stepNum < 10 ? '0' + stepNum : stepNum;
+      
+      labelStep.textContent = `QUESTION ${formattedNum} / 30`;
+      labelCategory.textContent = q.theme;
+      
+      const pct = (stepNum / questions.length) * 100;
+      barProgress.style.width = pct + '%';
+      textQuestion.textContent = q.prompt;
+
+      optionsContainer.innerHTML = '';
+
+      q.choices.forEach((choice, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'mono-choice-btn w-full text-left p-3.5 sm:p-4 rounded border border-mono-800 bg-black text-mono-200 text-xs sm:text-sm font-normal flex items-start gap-3';
+        
+        const indexLabel = document.createElement('span');
+        indexLabel.className = 'font-mono text-mono-500 text-xs mt-0.5';
+        indexLabel.textContent = `0${idx + 1}`;
+
+        const textContent = document.createElement('span');
+        textContent.className = 'flex-1 leading-relaxed';
+        textContent.textContent = choice.text;
+
+        btn.appendChild(indexLabel);
+        btn.appendChild(textContent);
+
+        btn.addEventListener('click', () => selectChoice(choice.servant));
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function selectChoice(servantKey) {
+      playTone(750, 0.04);
+      if (scores[servantKey] !== undefined) {
+        scores[servantKey]++;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      playTone(880, 0.08);
+      setTimeout(() => playTone(1100, 0.12), 80);
+
+      // Determine highest scoring servant
+      let topServant = 'artoria';
+      let maxScore = -1;
+      for (const [key, val] of Object.entries(scores)) {
+        if (val > maxScore) {
+          maxScore = val;
+          topServant = key;
+        }
+      }
+
+      const s = servants[topServant] || servants.artoria;
+
+      document.getElementById('resServantIcon').innerHTML = classIcons[s.classBadge] || defaultClassIcon;
+      document.getElementById('resClassBadge').textContent = s.classBadge;
+      document.getElementById('resServantName').textContent = s.name;
+      document.getElementById('resServantTitle').textContent = s.title;
+      document.getElementById('resDialogueQuote').textContent = s.quote;
+      document.getElementById('resAnalysisText').textContent = s.analysis;
+      document.getElementById('resNpName').textContent = s.npName;
+      document.getElementById('resNpSub').textContent = s.npSub;
+      document.getElementById('resDominantTrait').textContent = s.dominantTrait;
+      document.getElementById('resAlignment').textContent = s.alignment;
+
+      const skillsContainer = document.getElementById('resSkillsContainer');
+      skillsContainer.innerHTML = '';
+      s.skills.forEach(skill => {
+        const item = document.createElement('div');
+        item.className = 'p-3 bg-black border border-mono-850 rounded text-xs';
+        item.innerHTML = `
+          <div class="font-semibold text-white mb-0.5">${skill.name}</div>
+          <div class="text-mono-400 text-[11px] leading-relaxed">${skill.desc}</div>
+        `;
+        skillsContainer.appendChild(item);
+      });
+
+      screenQuiz.classList.add('hidden');
+      screenQuiz.classList.remove('flex');
+      screenResult.classList.remove('hidden');
+      screenResult.classList.add('flex');
+    }
+
+    // Share & Copy Handler
+    const btnCopyResult = document.getElementById('btnCopyResult');
+    const toastMessage = document.getElementById('toastMessage');
+
+    btnCopyResult.addEventListener('click', () => {
+      playTone(600, 0.05);
+      const servantName = document.getElementById('resServantName').textContent;
+      const servantClass = document.getElementById('resClassBadge').textContent;
+      const trait = document.getElementById('resDominantTrait').textContent;
+
+      const textToCopy = `[FGO Personality Test]\nผลลัพธ์ของฉันตรงกับ: ${servantName} (${servantClass})\nจุดเด่นทางจิตวิญญาณ: ${trait}\nแบบทดสอบบุคลิกภาพและอารมณ์ 30 ข้อ`;
+
+      const tempBuffer = document.getElementById('tempBuffer');
+      tempBuffer.value = textToCopy;
+      tempBuffer.select();
+      try {
+        document.execCommand('copy');
+        toastMessage.textContent = 'คัดลอกผลลัพธ์เรียบร้อยแล้ว (Copied)';
+        toastMessage.classList.remove('opacity-0');
+        setTimeout(() => toastMessage.classList.add('opacity-0'), 2200);
+      } catch (err) {
+        toastMessage.textContent = 'ไม่สามารถคัดลอกได้';
+        toastMessage.classList.remove('opacity-0');
+      }
+    });
+
+    // Restart Handler
+    document.getElementById('btnRestart').addEventListener('click', () => {
+      playTone(500, 0.05);
+      screenResult.classList.add('hidden');
+      screenResult.classList.remove('flex');
+      screenIntro.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
